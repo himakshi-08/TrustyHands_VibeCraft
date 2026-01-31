@@ -635,15 +635,17 @@
         </div>
     </div>
 
-    <!-- Admin Approval Simulator -->
-    <button class="btn-approve-mock" id="mockApprove" style="display: none;">
-        <i class="fas fa-user-check"></i> (Admin) Approve Application
-    </button>
+    <!-- Status Polling Feedback (Admin view will approve) -->
+    <div id="statusAlert"
+        style="display: none; position: fixed; bottom: 30px; right: 30px; background: var(--primary); color: white; padding: 15px 25px; border-radius: 12px; box-shadow: var(--shadow); z-index: 2000; animation: slideUp 0.5s ease;">
+        <i class="fas fa-check-circle"></i> Application Status Updated!
+    </div>
 
     <script>
         // Data Store
         let currentStepNum = 1;
         const workerStore = {};
+        let pollingInterval = null;
 
         // 1. Wizard Logic
         const next = document.getElementById('nextBtn');
@@ -653,7 +655,8 @@
         function updateUI() {
             // Steps
             document.querySelectorAll('.wizard-step').forEach(w => w.style.display = 'none');
-            document.getElementById(`wStep${currentStepNum}`).style.display = 'block';
+            const targetStep = document.getElementById(`wStep${currentStepNum}`);
+            if (targetStep) targetStep.style.display = 'block';
 
             // Indicators
             document.querySelectorAll('.step').forEach((s, i) => {
@@ -677,12 +680,14 @@
             if (validateStep(currentStepNum)) {
                 currentStepNum++;
                 updateUI();
+                window.scrollTo(0, 0);
             }
         });
 
         prev.addEventListener('click', () => {
             currentStepNum--;
             updateUI();
+            window.scrollTo(0, 0);
         });
 
         function validateStep(n) {
@@ -693,12 +698,18 @@
                 if (!i.value) { i.style.borderColor = '#e74c3c'; ok = false; }
                 else { i.style.borderColor = 'var(--border)'; }
             });
+            if (!ok) alert("Please fill in all required fields before continuing.");
             return ok;
         }
 
-        // 2. File Previews
+        // 2. File Previews & Handling
         document.getElementById('idUp').onchange = (e) => {
-            if (e.target.files[0]) document.getElementById('idName').textContent = e.target.files[0].name;
+            if (e.target.files[0]) {
+                document.getElementById('idName').textContent = e.target.files[0].name;
+                const reader = new FileReader();
+                reader.onload = (re) => { workerStore.idProof = re.target.result; };
+                reader.readAsDataURL(e.target.files[0]);
+            }
         };
         document.getElementById('faceUp').onchange = (e) => {
             if (e.target.files[0]) {
@@ -715,7 +726,7 @@
             console.log("Submit triggered");
 
             try {
-                // Manual validation for Step 3 files
+                // Manual validation
                 const idFile = document.getElementById('idUp').files[0];
                 const faceFile = document.getElementById('faceUp').files[0];
 
@@ -724,55 +735,96 @@
                     return;
                 }
 
-                // Check for consensus checkbox
                 const consentBox = document.querySelector('input[type="checkbox"][required]');
                 if (consentBox && !consentBox.checked) {
                     alert("⚠️ Actions Required:\nPlease check the confirmation box to proceed.");
                     return;
                 }
 
-                // Save Data
-                workerStore.name = document.getElementById('fName').value || "Professional Worker";
-                workerStore.service = document.getElementById('fService').value || "Service Expert";
-                workerStore.rate = document.getElementById('fRate').value || "---";
+                // Prepare Data
+                const workerId = "W-" + Date.now();
+                workerStore.id = workerId;
+                workerStore.name = document.getElementById('fName').value;
+                workerStore.service = document.getElementById('fService').value;
+                workerStore.rate = document.getElementById('fRate').value;
+                workerStore.email = document.getElementById('fEmail').value;
+                workerStore.phone = document.getElementById('fPhone').value;
+                workerStore.bio = document.getElementById('fBio').value;
+                workerStore.status = 'pending';
 
-                console.log("Transitioning to pending state for:", workerStore.name);
+                console.log("Saving application for admin review...");
 
-                // Switch to Pending
+                // Save to localStorage
+                const pending = JSON.parse(localStorage.getItem('pendingWorkers') || '[]');
+                pending.push(workerStore);
+                localStorage.setItem('pendingWorkers', JSON.stringify(pending));
+
+                // Switch UI
                 document.getElementById('registrationPart').style.display = 'none';
                 document.getElementById('pendingReview').style.display = 'block';
                 document.getElementById('pName').textContent = workerStore.name.split(' ')[0];
                 document.getElementById('universalHome').style.display = 'none';
 
-                // Show Admin Trigger
-                setTimeout(() => {
-                    const mockBtn = document.getElementById('mockApprove');
-                    if (mockBtn) mockBtn.style.display = 'block';
-                }, 1000);
+                // Start Status Polling
+                startStatusPolling(workerId);
 
                 window.scrollTo(0, 0);
             } catch (err) {
                 console.error("Submission error:", err);
-                alert("An unexpected error occurred. Please refresh and try again.");
+                alert("An error occurred. Please try again.");
             }
         };
 
-        // 4. Admin Simulation
-        document.getElementById('mockApprove').onclick = () => {
+        function startStatusPolling(id) {
+            console.log("Polling for admin approval...");
+            pollingInterval = setInterval(() => {
+                // Check Approved
+                const approved = JSON.parse(localStorage.getItem('approvedWorkers') || '[]');
+                const found = approved.find(w => w.id === id);
+                if (found) {
+                    clearInterval(pollingInterval);
+                    showStatusUpdateAlert("approved", found);
+                }
+
+                // Check Rejected
+                const rejected = JSON.parse(localStorage.getItem('rejectedWorkers') || '[]');
+                if (rejected.includes(id)) {
+                    clearInterval(pollingInterval);
+                    showStatusUpdateAlert("rejected");
+                }
+            }, 3000);
+        }
+
+        function showStatusUpdateAlert(status, data) {
+            const alertBox = document.getElementById('statusAlert');
+            alertBox.style.display = 'block';
+
+            if (status === 'approved') {
+                alertBox.style.background = '#27ae60';
+                alertBox.innerHTML = '<i class="fas fa-check-double"></i> Verified! Dashboard Unlocked.';
+                setTimeout(() => {
+                    alertBox.style.display = 'none';
+                    switchToDashboard(data);
+                }, 2000);
+            } else {
+                alertBox.style.background = '#e74c3c';
+                alertBox.innerHTML = '<i class="fas fa-times-circle"></i> Application Refused. Please contact support.';
+                setTimeout(() => location.reload(), 3000);
+            }
+        }
+
+        function switchToDashboard(data) {
             document.getElementById('pendingReview').style.display = 'none';
-            document.getElementById('mockApprove').style.display = 'none';
             document.getElementById('expertPortal').style.display = 'block';
 
-            // Fill Dashboard
-            document.getElementById('dName').textContent = workerStore.name.split(' ')[0];
-            document.getElementById('dFullName').textContent = workerStore.name;
-            document.getElementById('dService').textContent = workerStore.service;
-            if (workerStore.photo) document.getElementById('dImg').src = workerStore.photo;
-            else document.getElementById('dImg').style.display = 'none';
+            document.getElementById('dName').textContent = data.name.split(' ')[0];
+            document.getElementById('dFullName').textContent = data.name;
+            document.getElementById('dService').textContent = data.service;
+            if (data.photo) document.getElementById('dImg').src = data.photo;
 
             loadJobs();
             window.scrollTo(0, 0);
-        };
+        }
 
         function loadJobs() {
             const jobs = [
@@ -803,10 +855,10 @@
             const el = document.getElementById(`j-${id}`);
             el.innerHTML = `
                 <div style="width: 100%; text-align: center; color: #27ae60; font-weight: 700; background: #eafaf1; padding: 20px; border-radius: 12px;">
-                    <i class="fas fa-check-circle"></i> JOB SECURED! Your professional profile (including rating & contact) has been sent to ${user}. Check your SMS/WhatsApp for details.
+                    <i class="fas fa-check-circle"></i> JOB SECURED! Your professional profile has been sent to ${user}.
                 </div>
             `;
-            alert(`✅ Real-World Notification:\nYour professional bio and contact info have been beamed to ${user}. They are expecting your call!`);
+            alert(`✅ Success: Your details have been sent to ${user}. They will contact you shortly!`);
         };
     </script>
 </body>

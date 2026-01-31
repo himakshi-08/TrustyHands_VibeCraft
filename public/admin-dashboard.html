@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | TrustyHands Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #606c38;
+            --primary-dark: #283618;
+            --secondary: #dda15e;
+            --accent: #bc6c25;
+            --bg-light: #fefae0;
+            --white: #ffffff;
+            --text-main: #2c3e50;
+            --text-light: #7f8c8d;
+            --border: #e0e0e0;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #f4f7f6;
+            color: var(--text-main);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        aside {
+            width: 280px;
+            background: var(--primary-dark);
+            color: white;
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            left: 0;
+            top: 0;
+        }
+
+        .admin-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 50px;
+            color: var(--secondary);
+        }
+
+        .nav-links {
+            list-style: none;
+            flex: 1;
+        }
+
+        .nav-links li {
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-weight: 500;
+            opacity: 0.7;
+        }
+
+        .nav-links li:hover,
+        .nav-links li.active {
+            background: rgba(255, 255, 255, 0.1);
+            opacity: 1;
+        }
+
+        .nav-links li.active {
+            border-left: 4px solid var(--secondary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Main Content */
+        main {
+            flex: 1;
+            margin-left: 280px;
+            padding: 40px;
+        }
+
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: var(--primary-dark);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: var(--white);
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .stat-info h3 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+
+        .stat-info p {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        /* Workers Table */
+        .section-card {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 15px;
+            border-bottom: 2px solid #f0f0f0;
+            color: var(--text-light);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        td {
+            padding: 20px 15px;
+            border-bottom: 1px solid #f8f8f8;
+            vertical-align: middle;
+        }
+
+        .worker-pill {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .worker-img {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary);
+        }
+
+        .status-badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .status-pending {
+            background: #fff8e1;
+            color: #f39c12;
+        }
+
+        .status-approved {
+            background: #eafaf1;
+            color: #27ae60;
+        }
+
+        .btn-action {
+            padding: 8px 15px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+            font-size: 0.85rem;
+        }
+
+        .btn-approve {
+            background: var(--primary);
+            color: white;
+            margin-right: 5px;
+        }
+
+        .btn-approve:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-reject {
+            background: #fee2e2;
+            color: #ef4444;
+        }
+
+        .btn-reject:hover {
+            background: #fecaca;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px;
+            color: var(--text-light);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            display: block;
+            opacity: 0.3;
+        }
+
+        /* Modal or Detail View (Simple alert for now) */
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <aside>
+        <div class="admin-logo">
+            <i class="fas fa-crown"></i>
+            <span>TrustyHands ADM</span>
+        </div>
+        <ul class="nav-links">
+            <li class="active"><i class="fas fa-users"></i> Worker Approvals</li>
+            <li><i class="fas fa-chart-line"></i> Market Insights</li>
+            <li><i class="fas fa-shield-alt"></i> Complaints</li>
+            <li><i class="fas fa-cog"></i> Platform Settings</li>
+        </ul>
+        <div style="padding: 15px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.8rem; opacity: 0.5;">
+            Version 2.4.0 (Stable)
+        </div>
+    </aside>
+
+    <main>
+        <div class="header-actions">
+            <h1>Worker Verification Hub</h1>
+            <div
+                style="background: var(--white); padding: 10px 20px; border-radius: 12px; box-shadow: var(--shadow); font-weight: 600;">
+                <i class="fas fa-calendar"></i> <span id="currentDate">Jan 31, 2026</span>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #eafaf1; color: #27ae60;"><i class="fas fa-clock"></i></div>
+                <div class="stat-info">
+                    <h3 id="pendingCount">0</h3>
+                    <p>Pending Review</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #fdf2f2; color: #ef4444;"><i class="fas fa-user-check"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="approvedCount">0</h3>
+                    <p>Total Professionals</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #fff8e1; color: #f39c12;"><i class="fas fa-star"></i></div>
+                <div class="stat-info">
+                    <h3>4.9</h3>
+                    <p>Network Rating</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <div class="table-header">
+                <h2>Pending Applications</h2>
+                <button onclick="refreshData()" class="btn-action" style="background: #eee;"><i class="fas fa-sync"></i>
+                    Refresh List</button>
+            </div>
+
+            <div id="tableWrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Worker Profile</th>
+                            <th>Specialization</th>
+                            <th>Exp.</th>
+                            <th>Rate</th>
+                            <th>Identity</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="workerTableBody">
+                        <!-- Content injected by JS -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <i class="fas fa-clipboard-list"></i>
+                <p>No pending applications at the moment.</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Core Logic
+        const dateEl = document.getElementById('currentDate');
+        dateEl.textContent = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+        function refreshData() {
+            const pending = JSON.parse(localStorage.getItem('pendingWorkers') || '[]');
+            const approved = JSON.parse(localStorage.getItem('approvedWorkers') || '[]');
+
+            document.getElementById('pendingCount').textContent = pending.length;
+            document.getElementById('approvedCount').textContent = approved.length;
+
+            const tbody = document.getElementById('workerTableBody');
+            const empty = document.getElementById('emptyState');
+            const table = document.getElementById('tableWrapper');
+
+            if (pending.length === 0) {
+                empty.style.display = 'block';
+                table.style.display = 'none';
+                return;
+            }
+
+            empty.style.display = 'none';
+            table.style.display = 'block';
+
+            tbody.innerHTML = pending.map(w => `
+                <tr id="row-${w.id}">
+                    <td>
+                        <div class="worker-pill">
+                            <img src="${w.photo || 'https://via.placeholder.com/50'}" class="worker-img">
+                            <div>
+                                <div style="font-weight: 700;">${w.name}</div>
+                                <div style="font-size: 0.8rem; color: #888;">${w.email}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span class="status-badge" style="background: rgba(96, 108, 56, 0.1); color: var(--primary);">${w.service}</span></td>
+                    <td>${w.rate}</td>
+                    <td>₹${w.rate}/hr</td>
+                    <td><a href="#" onclick="alert('Viewing Secure ID Document...')"><i class="fas fa-file-pdf"></i> View ID</a></td>
+                    <td>
+                        <button class="btn-action btn-approve" onclick="approveWorker('${w.id}')">Approve</button>
+                        <button class="btn-action btn-reject" onclick="rejectWorker('${w.id}')">Reject</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function approveWorker(id) {
+            let pending = JSON.parse(localStorage.getItem('pendingWorkers') || '[]');
+            let approved = JSON.parse(localStorage.getItem('approvedWorkers') || '[]');
+
+            const worker = pending.find(w => w.id === id);
+            if (worker) {
+                // Move to approved
+                worker.status = 'approved';
+                approved.push(worker);
+                pending = pending.filter(w => w.id !== id);
+
+                localStorage.setItem('pendingWorkers', JSON.stringify(pending));
+                localStorage.setItem('approvedWorkers', JSON.stringify(approved));
+
+                alert(`✅ Success: ${worker.name} has been approved and notified!`);
+                refreshData();
+            }
+        }
+
+        function rejectWorker(id) {
+            if (!confirm("Are you sure you want to reject this application? This is permanent.")) return;
+
+            let pending = JSON.parse(localStorage.getItem('pendingWorkers') || '[]');
+            let rejected = JSON.parse(localStorage.getItem('rejectedWorkers') || '[]');
+
+            const worker = pending.find(w => w.id === id);
+            if (worker) {
+                rejected.push(id);
+                pending = pending.filter(w => w.id !== id);
+
+                localStorage.setItem('pendingWorkers', JSON.stringify(pending));
+                localStorage.setItem('rejectedWorkers', JSON.stringify(rejected));
+
+                alert(`❌ Denied: Application removed.`);
+                refreshData();
+            }
+        }
+
+        // Initial Load
+        refreshData();
+        // Auto-refresh every 5 seconds to catch new registrations
+        setInterval(refreshData, 5000);
+    </script>
+</body>
+
+</html>
