@@ -19,11 +19,14 @@ async function checkAuth(redirectToLogin = true) {
         const data = await response.json();
 
         if (data.authenticated) {
+            localStorage.setItem('th_logged_in', 'true');
             return data.user;
         } else if (redirectToLogin) {
+            localStorage.removeItem('th_logged_in');
             window.location.href = '/login.html';
             return null;
         }
+        localStorage.removeItem('th_logged_in');
         return null;
     } catch (error) {
         console.error('Auth check error:', error);
@@ -38,6 +41,7 @@ async function checkAuth(redirectToLogin = true) {
 async function logout() {
     sessionStorage.removeItem('adminLoggedIn'); // Clear admin flag
     sessionStorage.removeItem('th_avatar_url'); // Clear cache
+    localStorage.removeItem('th_logged_in'); // Clear predictive flag
 
     try {
         await fetch('/api/auth/logout', {
