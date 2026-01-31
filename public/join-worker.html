@@ -445,7 +445,7 @@
             </div>
 
             <div class="onboarding-card">
-                <form id="onboardingForm">
+                <form id="onboardingForm" novalidate>
                     <!-- Wizard: Step 1 -->
                     <div class="wizard-step" id="wStep1">
                         <h3 class="form-section-title"><i class="fas fa-user"></i> Tell us who you are</h3>
@@ -712,27 +712,49 @@
         // 3. Final Submission
         document.getElementById('onboardingForm').onsubmit = (e) => {
             e.preventDefault();
+            console.log("Submit triggered");
 
-            // Manual validation for Step 3 files
-            if (!document.getElementById('idUp').files[0] || !document.getElementById('faceUp').files[0]) {
-                alert("Please upload both your ID proof and profile photo to continue.");
-                return;
+            try {
+                // Manual validation for Step 3 files
+                const idFile = document.getElementById('idUp').files[0];
+                const faceFile = document.getElementById('faceUp').files[0];
+
+                if (!idFile || !faceFile) {
+                    alert("⚠️ Actions Required:\nPlease upload both your ID proof and profile photo before submitting.");
+                    return;
+                }
+
+                // Check for consensus checkbox
+                const consentBox = document.querySelector('input[type="checkbox"][required]');
+                if (consentBox && !consentBox.checked) {
+                    alert("⚠️ Actions Required:\nPlease check the confirmation box to proceed.");
+                    return;
+                }
+
+                // Save Data
+                workerStore.name = document.getElementById('fName').value || "Professional Worker";
+                workerStore.service = document.getElementById('fService').value || "Service Expert";
+                workerStore.rate = document.getElementById('fRate').value || "---";
+
+                console.log("Transitioning to pending state for:", workerStore.name);
+
+                // Switch to Pending
+                document.getElementById('registrationPart').style.display = 'none';
+                document.getElementById('pendingReview').style.display = 'block';
+                document.getElementById('pName').textContent = workerStore.name.split(' ')[0];
+                document.getElementById('universalHome').style.display = 'none';
+
+                // Show Admin Trigger
+                setTimeout(() => {
+                    const mockBtn = document.getElementById('mockApprove');
+                    if (mockBtn) mockBtn.style.display = 'block';
+                }, 1000);
+
+                window.scrollTo(0, 0);
+            } catch (err) {
+                console.error("Submission error:", err);
+                alert("An unexpected error occurred. Please refresh and try again.");
             }
-
-            // Save Data
-            workerStore.name = document.getElementById('fName').value;
-            workerStore.service = document.getElementById('fService').value;
-            workerStore.rate = document.getElementById('fRate').value;
-
-            // Switch to Pending
-            document.getElementById('registrationPart').style.display = 'none';
-            document.getElementById('pendingReview').style.display = 'block';
-            document.getElementById('pName').textContent = workerStore.name.split(' ')[0];
-            document.getElementById('universalHome').style.display = 'none';
-
-            // Show Admin Trigger
-            setTimeout(() => { document.getElementById('mockApprove').style.display = 'block'; }, 1000);
-            window.scrollTo(0, 0);
         };
 
         // 4. Admin Simulation
