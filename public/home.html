@@ -1751,6 +1751,11 @@
                 if (userNameEl) userNameEl.textContent = user.firstName + (user.lastName ? ' ' + user.lastName : '');
                 if (userEmailEl) userEmailEl.textContent = user.email;
 
+                // FIX: Apply avatar immediately if available to prevent flicker
+                if (user.profileImage && typeof applyHeaderAvatar === 'function') {
+                    applyHeaderAvatar(user.profileImage, user.firstName);
+                }
+
                 // For logged in users, ensure buttons go to target pages
                 const actionButtons = document.querySelectorAll('a[href="book-worker.html"], a[href="join-worker.html"]');
                 actionButtons.forEach(btn => {
