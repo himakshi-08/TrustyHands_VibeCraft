@@ -34,6 +34,88 @@
             color: var(--text-main);
             display: flex;
             min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Login Gate Overlay */
+        #loginGate {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--primary-dark);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .login-card {
+            background: var(--white);
+            padding: 50px;
+            border-radius: 25px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            animation: slideUp 0.6s ease;
+        }
+
+        .login-card i {
+            font-size: 3rem;
+            color: var(--secondary);
+            margin-bottom: 20px;
+        }
+
+        .login-card h2 {
+            margin-bottom: 10px;
+            color: var(--primary-dark);
+            font-size: 1.8rem;
+        }
+
+        .login-card p {
+            color: var(--text-light);
+            margin-bottom: 30px;
+            font-size: 0.9rem;
+        }
+
+        .login-form input {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1.5px solid #eee;
+            border-radius: 12px;
+            background: #fafafa;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .login-form input:focus {
+            border-color: var(--primary);
+            background: white;
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(96, 108, 56, 0.1);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 15px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-login:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
         }
 
         /* Sidebar */
@@ -94,6 +176,8 @@
             flex: 1;
             margin-left: 280px;
             padding: 40px;
+            display: none;
+            /* Hidden until login */
         }
 
         .header-actions {
@@ -255,11 +339,10 @@
             opacity: 0.3;
         }
 
-        /* Modal or Detail View (Simple alert for now) */
         @keyframes slideUp {
             from {
                 opacity: 0;
-                transform: translateY(20px);
+                transform: translateY(30px);
             }
 
             to {
@@ -271,7 +354,25 @@
 </head>
 
 <body>
-    <aside>
+    <!-- Authentication Gate -->
+    <div id="loginGate">
+        <div class="login-card">
+            <i class="fas fa-user-shield"></i>
+            <h2>Admin Verification</h2>
+            <p>Access restricted to TrustyHands administrators only.</p>
+            <form class="login-form" id="adminLoginForm">
+                <input type="email" id="adminEmail" placeholder="Admin Email" required>
+                <input type="password" id="adminPass" placeholder="Access Key" required>
+                <button type="submit" class="btn-login">Unlock Dashboard</button>
+            </form>
+            <div id="loginError" style="color: #e74c3c; font-size: 0.85rem; margin-top: 15px; display: none;">
+                Invalid credentials. Please contact IT support.
+            </div>
+        </div>
+    </div>
+
+    <!-- Protected Content (Hidden by default) -->
+    <aside id="sidebar" style="display:none">
         <div class="admin-logo">
             <i class="fas fa-crown"></i>
             <span>TrustyHands ADM</span>
@@ -287,7 +388,7 @@
         </div>
     </aside>
 
-    <main>
+    <main id="dashboardMain">
         <div class="header-actions">
             <h1>Worker Verification Hub</h1>
             <div
@@ -335,6 +436,7 @@
                             <th>Worker Profile</th>
                             <th>Specialization</th>
                             <th>Exp.</th>
+                            <th>City</th>
                             <th>Rate</th>
                             <th>Identity</th>
                             <th>Actions</th>
@@ -353,6 +455,40 @@
     </main>
 
     <script>
+        // Authentication Logic
+        const ADMIN_EMAIL = "admin@trustyhands.com";
+        const ADMIN_PASS = "admin123";
+
+        document.getElementById('adminLoginForm').onsubmit = (e) => {
+            e.preventDefault();
+            const email = document.getElementById('adminEmail').value;
+            const pass = document.getElementById('adminPass').value;
+
+            if (email === ADMIN_EMAIL && pass === ADMIN_PASS) {
+                sessionStorage.setItem('adminLoggedIn', 'true');
+                unlockDashboard();
+            } else {
+                document.getElementById('loginError').style.display = 'block';
+                setTimeout(() => { document.getElementById('loginError').style.display = 'none'; }, 3000);
+            }
+        };
+
+        function unlockDashboard() {
+            document.getElementById('loginGate').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('loginGate').style.display = 'none';
+                document.getElementById('sidebar').style.display = 'flex';
+                document.getElementById('dashboardMain').style.display = 'block';
+                document.body.style.overflow = 'auto';
+                refreshData();
+            }, 300);
+        }
+
+        // Auto-login check
+        if (sessionStorage.getItem('adminLoggedIn') === 'true') {
+            unlockDashboard();
+        }
+
         // Core Logic
         const dateEl = document.getElementById('currentDate');
         dateEl.textContent = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -390,6 +526,7 @@
                     </td>
                     <td><span class="status-badge" style="background: rgba(96, 108, 56, 0.1); color: var(--primary);">${w.service}</span></td>
                     <td>${w.rate}</td>
+                    <td><i class="fas fa-map-marker-alt"></i> ${w.city || 'N/A'}</td>
                     <td>₹${w.rate}/hr</td>
                     <td><a href="#" onclick="alert('Viewing Secure ID Document...')"><i class="fas fa-file-pdf"></i> View ID</a></td>
                     <td>
@@ -406,7 +543,6 @@
 
             const worker = pending.find(w => w.id === id);
             if (worker) {
-                // Move to approved
                 worker.status = 'approved';
                 approved.push(worker);
                 pending = pending.filter(w => w.id !== id);
@@ -414,13 +550,13 @@
                 localStorage.setItem('pendingWorkers', JSON.stringify(pending));
                 localStorage.setItem('approvedWorkers', JSON.stringify(approved));
 
-                alert(`✅ Success: ${worker.name} has been approved and notified!`);
+                alert(`✅ Success: ${worker.name} approved!`);
                 refreshData();
             }
         }
 
         function rejectWorker(id) {
-            if (!confirm("Are you sure you want to reject this application? This is permanent.")) return;
+            if (!confirm("Reject this application?")) return;
 
             let pending = JSON.parse(localStorage.getItem('pendingWorkers') || '[]');
             let rejected = JSON.parse(localStorage.getItem('rejectedWorkers') || '[]');
@@ -433,15 +569,15 @@
                 localStorage.setItem('pendingWorkers', JSON.stringify(pending));
                 localStorage.setItem('rejectedWorkers', JSON.stringify(rejected));
 
-                alert(`❌ Denied: Application removed.`);
+                alert(`❌ Rejected: Application removed.`);
                 refreshData();
             }
         }
 
-        // Initial Load
-        refreshData();
-        // Auto-refresh every 5 seconds to catch new registrations
-        setInterval(refreshData, 5000);
+        // Auto-refresh every 5 seconds
+        setInterval(() => {
+            if (sessionStorage.getItem('adminLoggedIn') === 'true') refreshData();
+        }, 5000);
     </script>
 </body>
 

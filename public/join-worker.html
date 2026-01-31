@@ -464,94 +464,113 @@
                                 <label>Email Address</label>
                                 <input type="email" id="fEmail" placeholder="john@example.com" required>
                             </div>
-                            <div class="form-group">
-                                <label>Select Gender</label>
-                                <select id="fGender" required>
-                                    <option value="">Select...</option>
-                                    <option>Male</option>
-                                    <option>Female</option>
-                                    <option>Other</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Wizard: Step 2 -->
-                    <div class="wizard-step" id="wStep2" style="display: none;">
-                        <h3 class="form-section-title"><i class="fas fa-tools"></i> Your Skills & Rate</h3>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label>Primary Specialization</label>
-                                <select id="fService" required>
-                                    <option value="">Choose a skill...</option>
-                                    <option>Plumbing Expert</option>
-                                    <option>Master Electrician</option>
-                                    <option>Deep Cleaning Specialist</option>
-                                    <option>Professional Carpenter</option>
-                                    <option>Home Painting</option>
-                                    <option>AC Technician</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Experience Level</label>
-                                <select id="fExp" required>
-                                    <option value="">Select...</option>
-                                    <option>0-2 Years (Junior)</option>
-                                    <option>2-5 Years (Professional)</option>
-                                    <option>5-10 Years (Expert)</option>
-                                    <option>10+ Years (Master)</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-group" style="margin-bottom: 25px;">
-                            <label>Base Hourly Rate (₹)</label>
-                            <input type="number" id="fRate" placeholder="e.g. 350" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Professional Bio</label>
-                            <textarea id="fBio" rows="3"
-                                placeholder="Tell potential customers why they should hire you..." required></textarea>
-                        </div>
-                    </div>
-
-                    <!-- Wizard: Step 3 -->
-                    <div class="wizard-step" id="wStep3" style="display: none;">
-                        <h3 class="form-section-title"><i class="fas fa-shield-alt"></i> Documents & Identity</h3>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label>Identity Proof (ID Card)</label>
-                                <div class="upload-zone" onclick="document.getElementById('idUp').click()">
-                                    <i class="fas fa-id-badge"></i>
-                                    <p id="idName">Click to upload ID photo</p>
-                                    <input type="file" id="idUp" style="display:none">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Select Gender</label>
+                                    <select id="fGender" required>
+                                        <option value="">Select...</option>
+                                        <option>Male</option>
+                                        <option>Female</option>
+                                        <option>Other</option>
+                                    </select>
                                 </div>
-                            </div>
-                            <div class="form-group">
-                                <label>Profile Photo</label>
-                                <div class="upload-zone" onclick="document.getElementById('faceUp').click()">
-                                    <i class="fas fa-camera"></i>
-                                    <p id="faceName">Professional face photo</p>
-                                    <input type="file" id="faceUp" style="display:none">
+                                <div class="form-group">
+                                    <label>Work City/Service Area</label>
+                                    <select id="fCity" required>
+                                        <option value="">Select City...</option>
+                                        <option>Mumbai</option>
+                                        <option>Delhi</option>
+                                        <option>Bangalore</option>
+                                        <option>Hyderabad</option>
+                                        <option>Ahmedabad</option>
+                                        <option>Chennai</option>
+                                        <option>Kolkata</option>
+                                        <option>Pune</option>
+                                        <option>Other</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
-                        <div style="margin-top: 30px;">
-                            <label style="display: flex; gap: 10px; align-items: flex-start; cursor: pointer;">
-                                <input type="checkbox" style="width: 20px; height: 20px;" required>
-                                <span style="font-size: 0.9rem;">I confirm that I have never been convicted of a crime
-                                    and provide accurate information for verification.</span>
-                            </label>
-                        </div>
-                    </div>
 
-                    <div class="btn-row">
-                        <button type="button" class="btn btn-prev" id="prevBtn"
-                            style="visibility:hidden">Previous</button>
-                        <button type="button" class="btn btn-next" id="nextBtn">Continue <i
-                                class="fas fa-arrow-right"></i></button>
-                        <button type="submit" class="btn btn-next" id="subBtn" style="display:none">Submit Application
-                            <i class="fas fa-check-circle"></i></button>
-                    </div>
+                        <!-- Wizard: Step 2 -->
+                        <div class="wizard-step" id="wStep2" style="display: none;">
+                            <h3 class="form-section-title"><i class="fas fa-tools"></i> Your Skills & Rate</h3>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Primary Specialization</label>
+                                    <select id="fService" required>
+                                        <option value="">Choose a skill...</option>
+                                        <option>Plumbing Expert</option>
+                                        <option>Master Electrician</option>
+                                        <option>Deep Cleaning Specialist</option>
+                                        <option>Professional Carpenter</option>
+                                        <option>Home Painting</option>
+                                        <option>AC Technician</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Experience Level</label>
+                                    <select id="fExp" required>
+                                        <option value="">Select...</option>
+                                        <option>0-2 Years (Junior)</option>
+                                        <option>2-5 Years (Professional)</option>
+                                        <option>5-10 Years (Expert)</option>
+                                        <option>10+ Years (Master)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 25px;">
+                                <label>Base Hourly Rate (₹)</label>
+                                <input type="number" id="fRate" placeholder="e.g. 350" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Professional Bio</label>
+                                <textarea id="fBio" rows="3"
+                                    placeholder="Tell potential customers why they should hire you..."
+                                    required></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Wizard: Step 3 -->
+                        <div class="wizard-step" id="wStep3" style="display: none;">
+                            <h3 class="form-section-title"><i class="fas fa-shield-alt"></i> Documents & Identity</h3>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Identity Proof (ID Card)</label>
+                                    <div class="upload-zone" onclick="document.getElementById('idUp').click()">
+                                        <i class="fas fa-id-badge"></i>
+                                        <p id="idName">Click to upload ID photo</p>
+                                        <input type="file" id="idUp" style="display:none">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Profile Photo</label>
+                                    <div class="upload-zone" onclick="document.getElementById('faceUp').click()">
+                                        <i class="fas fa-camera"></i>
+                                        <p id="faceName">Professional face photo</p>
+                                        <input type="file" id="faceUp" style="display:none">
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="margin-top: 30px;">
+                                <label style="display: flex; gap: 10px; align-items: flex-start; cursor: pointer;">
+                                    <input type="checkbox" style="width: 20px; height: 20px;" required>
+                                    <span style="font-size: 0.9rem;">I confirm that I have never been convicted of a
+                                        crime
+                                        and provide accurate information for verification.</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="btn-row">
+                            <button type="button" class="btn btn-prev" id="prevBtn"
+                                style="visibility:hidden">Previous</button>
+                            <button type="button" class="btn btn-next" id="nextBtn">Continue <i
+                                    class="fas fa-arrow-right"></i></button>
+                            <button type="submit" class="btn btn-next" id="subBtn" style="display:none">Submit
+                                Application
+                                <i class="fas fa-check-circle"></i></button>
+                        </div>
                 </form>
             </div>
         </div>
@@ -749,6 +768,7 @@
                 workerStore.rate = document.getElementById('fRate').value;
                 workerStore.email = document.getElementById('fEmail').value;
                 workerStore.phone = document.getElementById('fPhone').value;
+                workerStore.city = document.getElementById('fCity').value;
                 workerStore.bio = document.getElementById('fBio').value;
                 workerStore.status = 'pending';
 
