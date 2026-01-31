@@ -67,20 +67,33 @@
             justify-content: space-between;
             align-items: center;
             padding: 12px 0;
+            width: 100%;
+            position: relative;
         }
 
         .logo {
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 22px;
+            gap: 10px;
+            font-size: 32px;
             font-weight: 700;
             color: var(--primary);
             letter-spacing: 0.5px;
+            text-decoration: none;
+            flex-shrink: 0;
+            order: 1;
         }
 
         .logo i {
+            font-size: 36px;
             color: var(--accent);
+        }
+
+        nav {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            order: 2;
         }
 
         nav ul {
@@ -126,6 +139,28 @@
         .auth-buttons {
             display: flex;
             gap: 10px;
+            align-items: center;
+            flex-shrink: 0;
+            order: 3;
+        }
+
+        .welcome-message {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text);
+            font-size: 15px;
+            font-weight: 500;
+            margin-right: 10px;
+        }
+
+        .welcome-message .welcome-text {
+            color: var(--text-light);
+        }
+
+        .welcome-message .username {
+            color: var(--primary);
+            font-weight: 600;
         }
 
         .btn {
@@ -666,6 +701,7 @@
             display: flex;
             align-items: center;
             gap: 15px;
+            flex-shrink: 0;
         }
 
         .profile-circle {
@@ -781,10 +817,10 @@
     <!-- Header -->
     <header>
         <div class="container header-container">
-            <div class="logo">
+            <a href="home.html" class="logo">
                 <i class="fas fa-hands-helping"></i>
                 <span>Trustyhands</span>
-            </div>
+            </a>
             <nav>
                 <ul>
                     <li><a href="home.html">Home</a></li>
@@ -799,6 +835,10 @@
                 <div class="auth-buttons">
                     <!-- Logged In State -->
                     <div class="user-profile-container" id="userProfile" style="display: none;">
+                        <div class="welcome-message">
+                            <span class="welcome-text">Welcome,</span>
+                            <span class="username" id="welcomeUserName">User</span>
+                        </div>
                         <div class="profile-circle" id="profileToggle">
                             <span id="userInitials">U</span>
                         </div>
@@ -1210,8 +1250,11 @@
                 const initials = (user.firstName.charAt(0) + (user.lastName || '').charAt(0)).toUpperCase();
                 document.getElementById('userInitials').textContent = initials;
                 document.getElementById('dropdownInitials').textContent = initials;
-                document.getElementById('userName').textContent = user.firstName + (user.lastName ? ' ' + user.lastName : '');
+                const fullName = user.firstName + (user.lastName ? ' ' + user.lastName : '');
+                document.getElementById('userName').textContent = fullName;
                 document.getElementById('userEmail').textContent = user.email;
+                const welcomeUserNameEl = document.getElementById('welcomeUserName');
+                if (welcomeUserNameEl) welcomeUserNameEl.textContent = user.firstName || 'User';
             } else {
                 document.getElementById('userProfile').style.display = 'none';
                 document.getElementById('authLinks').style.display = 'flex';
