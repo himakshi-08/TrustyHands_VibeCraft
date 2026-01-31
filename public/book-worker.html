@@ -1252,7 +1252,7 @@
                 const card = document.createElement('div');
                 card.className = 'worker-card';
                 card.innerHTML = `
-                    <img src="${w.profile_picture_path || 'https://via.placeholder.com/150'}" class="worker-img">
+                    <img src="${w.profile_picture_path || `https://ui-avatars.com/api/?name=${encodeURIComponent(w.full_name)}&background=606c38&color=fff`}" class="worker-img">
                     <div class="worker-info">
                         <div class="worker-name">${w.full_name}</div>
                         <div class="worker-stats">
