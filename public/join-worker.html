@@ -956,45 +956,66 @@
                 workerStore.locality = document.getElementById('fLocality').value;
                 workerStore.pincode = document.getElementById('fPincode').value;
                 workerStore.bio = document.getElementById('fBio').value;
-                workerStore.status = 'pending';
 
-                console.log("Saving application for admin review...");
+                console.log("Submitting application to server...");
 
-                // Save to localStorage with Quota Handling
-                try {
-                    const pending = JSON.parse(localStorage.getItem('pendingWorkers') || '[]');
-                    pending.push(workerStore);
-                    localStorage.setItem('pendingWorkers', JSON.stringify(pending));
-                } catch (storeErr) {
-                    if (storeErr.name === 'QuotaExceededError' || storeErr.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
-                        console.warn("Storage full, attempting to save without large images...");
-                        // Fallback: Save text data only if images are too large
-                        delete workerStore.idProof;
-                        delete workerStore.photo;
-                        const pending = JSON.parse(localStorage.getItem('pendingWorkers') || '[]');
-                        pending.push(workerStore);
-                        localStorage.setItem('pendingWorkers', JSON.stringify(pending));
-                        alert("Note: Your images were very large, so we've proceed with text details only for faster review.");
-                    } else {
-                        throw storeErr; // Re-throw if it's not a quota issue
-                    }
-                }
+                const formData = new FormData();
+                formData.append('full_name', workerStore.name);
+                formData.append('email', workerStore.email);
+                formData.append('phone', workerStore.phone);
+                formData.append('location', `${workerStore.locality}, ${workerStore.city} ${workerStore.pincode}`);
+                formData.append('service_type', workerStore.service);
 
-                // Switch UI
-                document.getElementById('registrationPart').style.display = 'none';
-                document.getElementById('pendingReview').style.display = 'block';
+                // Parse experience to number
+                let expNum = 1;
+                if (workerStore.exp.includes('2-5')) expNum = 3;
+                if (workerStore.exp.includes('5-10')) expNum = 7;
+                if (workerStore.exp.includes('10+')) expNum = 12;
+                formData.append('experience', expNum);
 
-                const firstName = (workerStore.name || "Worker").split(' ')[0];
-                document.getElementById('pName').textContent = firstName;
-                document.getElementById('universalHome').style.display = 'none';
+                formData.append('min_price_per_hour', workerStore.rate);
+                formData.append('skills', workerStore.bio); // Using Bio as skills
+                formData.append('agreement', 'true');
+                formData.append('confirmation', 'true');
 
-                // Start Status Polling
-                startStatusPolling(workerId);
+                // Append files
+                if (idFile) formData.append('id_proof', idFile);
+                if (faceFile) formData.append('profile_picture', faceFile);
 
-                window.scrollTo(0, 0);
+                submit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+                submit.disabled = true;
+
+                fetch('/api/workers/register', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Switch UI
+                            document.getElementById('registrationPart').style.display = 'none';
+                            document.getElementById('pendingReview').style.display = 'block';
+
+                            const firstName = (workerStore.name || "Worker").split(' ')[0];
+                            document.getElementById('pName').textContent = firstName;
+                            document.getElementById('universalHome').style.display = 'none';
+
+                            // Clear localStorage logic (optional)
+                            localStorage.removeItem('worker_temp_store');
+                        } else {
+                            throw new Error(data.error || 'Registration failed');
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Submission error:", err);
+                        alert("Submission failed: " + err.message);
+                        submit.innerHTML = 'Submit Application';
+                        submit.disabled = false;
+                    });
+
             } catch (err) {
-                console.error("Submission error details:", err);
-                alert("Submission failed: " + err.message + "\n\nTry using smaller images or checking your browser storage.");
+                console.error("Client error details:", err);
+                alert("An error occurred: " + err.message);
             }
         };
 

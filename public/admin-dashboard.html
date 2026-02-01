@@ -690,87 +690,104 @@
         const dateEl = document.getElementById('currentDate');
         dateEl.textContent = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
-        function refreshData() {
-            const pending = JSON.parse(localStorage.getItem('pendingWorkers') || '[]');
-            const approved = JSON.parse(localStorage.getItem('approvedWorkers') || '[]');
+        async function refreshData() {
+            try {
+                // Fetch pending workers from API
+                const pResp = await fetch('/api/workers?status=pending');
+                const pData = await pResp.json();
+                const pending = pData.workers || [];
 
-            document.getElementById('pendingCount').textContent = pending.length;
-            document.getElementById('approvedCount').textContent = approved.length;
+                // Fetch approved workers from API (optional: just for count)
+                const aResp = await fetch('/api/workers?status=approved');
+                const aData = await aResp.json();
+                const approved = aData.workers || [];
 
-            const tbody = document.getElementById('workerTableBody');
-            const empty = document.getElementById('emptyState');
-            const table = document.getElementById('tableWrapper');
+                document.getElementById('pendingCount').textContent = pending.length;
+                document.getElementById('approvedCount').textContent = approved.length;
 
-            if (pending.length === 0) {
-                empty.style.display = 'block';
-                table.style.display = 'none';
-                return;
-            }
+                const tbody = document.getElementById('workerTableBody');
+                const empty = document.getElementById('emptyState');
+                const table = document.getElementById('tableWrapper');
 
-            empty.style.display = 'none';
-            table.style.display = 'block';
+                if (pending.length === 0) {
+                    empty.style.display = 'block';
+                    table.style.display = 'none';
+                    return;
+                }
 
-            tbody.innerHTML = pending.map(w => `
-                <tr id="row-${w.id}">
-                    <td>
-                        <div class="worker-pill">
-                            <img src="${w.photo || 'https://via.placeholder.com/50'}" class="worker-img">
-                            <div>
-                                <div style="font-weight: 700;">${w.name}</div>
-                                <div style="font-size: 0.8rem; color: #888;">${w.email}</div>
+                empty.style.display = 'none';
+                table.style.display = 'block';
+
+                tbody.innerHTML = pending.map(w => {
+                    // Extract city from location if needed or use location directly
+                    // Location in DB is "Locality, City Pincode" usually
+                    return `
+                    <tr id="row-${w._id}">
+                        <td>
+                            <div class="worker-pill">
+                                <img src="${w.profile_picture_path ? '/' + w.profile_picture_path : 'https://via.placeholder.com/50'}" class="worker-img" onerror="this.src='https://via.placeholder.com/50'">
+                                <div>
+                                    <div style="font-weight: 700;">${w.full_name}</div>
+                                    <div style="font-size: 0.8rem; color: #888;">${w.email}</div>
+                                </div>
                             </div>
-                        </div>
-                    </td>
-                    <td><span class="status-badge" style="background: rgba(96, 108, 56, 0.1); color: var(--primary);">${w.service}</span></td>
-                    <td>${w.exp || 'N/A'}</td>
-                    <td>
-                        <i class="fas fa-map-marker-alt" style="color:var(--accent)"></i> ${w.city || 'N/A'}<br>
-                        <small style="color: #888;">${w.locality || ''} ${w.pincode ? '(' + w.pincode + ')' : ''}</small>
-                    </td>
-                    <td>₹${w.rate}/hr</td>
-                    <td><a href="#" onclick="alert('Viewing Secure ID Document...')"><i class="fas fa-file-pdf"></i> View ID</a></td>
-                    <td>
-                        <button class="btn-action btn-approve" onclick="approveWorker('${w.id}')">Approve</button>
-                        <button class="btn-action btn-reject" onclick="rejectWorker('${w.id}')">Reject</button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function approveWorker(id) {
-            let pending = JSON.parse(localStorage.getItem('pendingWorkers') || '[]');
-            let approved = JSON.parse(localStorage.getItem('approvedWorkers') || '[]');
-
-            const worker = pending.find(w => w.id === id);
-            if (worker) {
-                worker.status = 'approved';
-                approved.push(worker);
-                pending = pending.filter(w => w.id !== id);
-
-                localStorage.setItem('pendingWorkers', JSON.stringify(pending));
-                localStorage.setItem('approvedWorkers', JSON.stringify(approved));
-
-                alert(`✅ Success: ${worker.name} approved!`);
-                refreshData();
+                        </td>
+                        <td><span class="status-badge" style="background: rgba(96, 108, 56, 0.1); color: var(--primary);">${w.service_type}</span></td>
+                        <td>${w.experience || 'N/A'} Yrs</td>
+                        <td>
+                            <i class="fas fa-map-marker-alt" style="color:var(--accent)"></i> ${w.location || 'N/A'}
+                        </td>
+                        <td>₹${w.min_price_per_hour}/hr</td>
+                        <td><a href="#" onclick="alert('Viewing Secure ID: ${w.id_proof_path}')"><i class="fas fa-file-pdf"></i> View ID</a></td>
+                        <td>
+                            <button class="btn-action btn-approve" onclick="approveWorker('${w._id}')">Approve</button>
+                            <button class="btn-action btn-reject" onclick="rejectWorker('${w._id}')">Reject</button>
+                        </td>
+                    </tr>
+                `}).join('');
+            } catch (err) {
+                console.error("Error refreshing data:", err);
             }
         }
 
-        function rejectWorker(id) {
+        async function approveWorker(id) {
+            try {
+                const res = await fetch(`/api/workers/${id}/status`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'approved' })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(`✅ Success: Worker approved!`);
+                    refreshData();
+                } else {
+                    alert(`Error: ${data.error}`);
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Failed to approve worker.");
+            }
+        }
+
+        async function rejectWorker(id) {
             if (!confirm("Reject this application?")) return;
-
-            let pending = JSON.parse(localStorage.getItem('pendingWorkers') || '[]');
-            let rejected = JSON.parse(localStorage.getItem('rejectedWorkers') || '[]');
-
-            const worker = pending.find(w => w.id === id);
-            if (worker) {
-                rejected.push(id);
-                pending = pending.filter(w => w.id !== id);
-
-                localStorage.setItem('pendingWorkers', JSON.stringify(pending));
-                localStorage.setItem('rejectedWorkers', JSON.stringify(rejected));
-
-                alert(`❌ Rejected: Application removed.`);
-                refreshData();
+            try {
+                const res = await fetch(`/api/workers/${id}/status`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'rejected' })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(`❌ Rejected: Application status updated.`);
+                    refreshData();
+                } else {
+                    alert(`Error: ${data.error}`);
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Failed to reject worker.");
             }
         }
 
@@ -808,66 +825,6 @@
                 }
             });
         });
-
-        // --- Dev Tools: Seed Data ---
-        function seedData() {
-            const mock = [
-                {
-                    id: 'dev-' + Date.now(),
-                    name: 'Rohan Sharma',
-                    email: 'rohan.s@example.com',
-                    service: 'Plumbing Services',
-                    exp: '5-10 Years (Expert)',
-                    city: 'Mumbai',
-                    locality: 'Andheri West',
-                    pincode: '400053',
-                    rate: '450',
-                    photo: 'https://randomuser.me/api/portraits/men/32.jpg',
-                    status: 'pending'
-                },
-                {
-                    id: 'dev-' + (Date.now() + 1),
-                    name: 'Priya Patel',
-                    email: 'priya.p@example.com',
-                    service: 'Deep Cleaning',
-                    exp: '2-5 Years (Professional)',
-                    city: 'Ahmedabad',
-                    locality: 'Navrangpura',
-                    pincode: '380009',
-                    rate: '300',
-                    photo: 'https://randomuser.me/api/portraits/women/44.jpg',
-                    status: 'pending'
-                }
-            ];
-
-            let current = JSON.parse(localStorage.getItem('pendingWorkers') || '[]');
-            // Avoid dupes if already seeded
-            if (current.length === 0) {
-                localStorage.setItem('pendingWorkers', JSON.stringify(mock));
-                refreshData();
-                alert('Test data generated! You should see 2 applications now.');
-            } else {
-                if (confirm('You already have pending applications. Add mock data anyway?')) {
-                    localStorage.setItem('pendingWorkers', JSON.stringify([...current, ...mock]));
-                    refreshData();
-                }
-            }
-        }
-
-        // Add Seed Button to Header
-        const headerBtnConfig = document.querySelector('.section-card .table-header');
-        if (headerBtnConfig) {
-            const seedBtn = document.createElement('button');
-            seedBtn.className = 'btn-action';
-            seedBtn.style.background = '#e0f7fa';
-            seedBtn.style.color = '#006064';
-            seedBtn.style.marginRight = '10px';
-            seedBtn.innerHTML = '<i class="fas fa-database"></i> Generate Test Data';
-            seedBtn.onclick = seedData;
-
-            // Insert before Refresh button
-            headerBtnConfig.insertBefore(seedBtn, headerBtnConfig.lastElementChild);
-        }
     </script>
 </body>
 
