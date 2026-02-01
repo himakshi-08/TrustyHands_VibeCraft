@@ -121,27 +121,56 @@ function applyHeaderAvatar(avatarUrl, firstName = '') {
 (function () {
     async function initGlobalAuth() {
         try {
-            // 1. Try to get user data from prediction/localStorage first for speed
-            // (Optional optimization, skipping for reliability)
+            // 1. Predictive UI: Apply cached name immediately to prevent "Welcome, User" flicker
+            try {
+                const cachedName = localStorage.getItem('th_first_name');
+                const cachedEmail = localStorage.getItem('th_user_email'); // Optional helper
+                const cachedAvatar = localStorage.getItem('th_avatar_url');
+                const loggedIn = localStorage.getItem('th_logged_in') === 'true';
 
-            // 2. Fetch fresh session/profile data
+                if (cachedName && loggedIn) {
+                    // Construct a partial user object for instant render
+                    const partialUser = {
+                        firstName: cachedName,
+                        email: cachedEmail || '',
+                        profileImage: cachedAvatar,
+                        lastName: '' // We might not have this cached, but first name is key
+                    };
+                    updateUserDisplay(partialUser);
+                }
+            } catch (e) { /* ignore storage errors */ }
+
+            // 2. Fetch fresh session/profile data (The Source of Truth)
             const resp = await fetch('/api/auth/session', { credentials: 'include' });
             const data = await resp.json();
 
             if (data.authenticated && data.user) {
-                // If logged in, update the entire header UI
+                // Update Cache
+                localStorage.setItem('th_first_name', data.user.firstName);
+                if (data.user.email) localStorage.setItem('th_user_email', data.user.email);
+
+                // If logged in, update the entire header UI with authoritative data
                 updateUserDisplay(data.user);
 
-                // Also fetch full profile for avatar if needed (session usually has it, but /profile is richer)
-                // The updateUserDisplay already used session data. 
-                // We can do a secondary fetch for the full profile if 'profileImage' is missing or tailored data needed.
+                // Secondary fetch for full profile (avatar) if needed
                 if (!data.user.profileImage) {
                     const profResp = await fetch('/api/auth/profile', { credentials: 'include' });
                     const profData = await profResp.json();
                     if (profData.success) {
+                        // Update cache and UI again with full details
+                        localStorage.setItem('th_first_name', profData.user.firstName);
+                        if (profData.user.profileImage) {
+                            localStorage.setItem('th_avatar_url', profData.user.profileImage);
+                        }
                         updateUserDisplay(profData.user);
                     }
                 }
+            } else {
+                // Not authenticated: Clear sensitive predictive cache
+                localStorage.removeItem('th_logged_in');
+                localStorage.removeItem('th_first_name');
+                localStorage.removeItem('th_avatar_url');
+                localStorage.removeItem('th_user_email');
             }
         } catch (e) {
             // Not logged in or error, do nothing (default UI stays)
