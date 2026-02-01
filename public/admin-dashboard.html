@@ -697,7 +697,7 @@
                 const pData = await pResp.json();
                 const pending = pData.workers || [];
 
-                // Fetch approved workers from API (optional: just for count)
+                // Fetch approved workers from API (for count)
                 const aResp = await fetch('/api/workers?status=approved');
                 const aData = await aResp.json();
                 const approved = aData.workers || [];
@@ -719,13 +719,11 @@
                 table.style.display = 'block';
 
                 tbody.innerHTML = pending.map(w => {
-                    // Extract city from location if needed or use location directly
-                    // Location in DB is "Locality, City Pincode" usually
                     return `
                     <tr id="row-${w._id}">
                         <td>
                             <div class="worker-pill">
-                                <img src="${w.profile_picture_path ? '/' + w.profile_picture_path : 'https://via.placeholder.com/50'}" class="worker-img" onerror="this.src='https://via.placeholder.com/50'">
+                                <img src="${w.profile_picture_path ? '/' + w.profile_picture_path.replace(/\\/g, '/') : 'https://via.placeholder.com/50'}" class="worker-img" onerror="this.src='https://via.placeholder.com/50'">
                                 <div>
                                     <div style="font-weight: 700;">${w.full_name}</div>
                                     <div style="font-size: 0.8rem; color: #888;">${w.email}</div>
@@ -733,12 +731,12 @@
                             </div>
                         </td>
                         <td><span class="status-badge" style="background: rgba(96, 108, 56, 0.1); color: var(--primary);">${w.service_type}</span></td>
-                        <td>${w.experience || 'N/A'} Yrs</td>
+                        <td>${w.experience || '0'} Yrs</td>
                         <td>
                             <i class="fas fa-map-marker-alt" style="color:var(--accent)"></i> ${w.location || 'N/A'}
                         </td>
                         <td>₹${w.min_price_per_hour}/hr</td>
-                        <td><a href="#" onclick="alert('Viewing Secure ID: ${w.id_proof_path}')"><i class="fas fa-file-pdf"></i> View ID</a></td>
+                        <td><a href="/${w.id_proof_path.replace(/\\/g, '/')}" target="_blank"><i class="fas fa-file-pdf"></i> View ID</a></td>
                         <td>
                             <button class="btn-action btn-approve" onclick="approveWorker('${w._id}')">Approve</button>
                             <button class="btn-action btn-reject" onclick="rejectWorker('${w._id}')">Reject</button>
@@ -758,6 +756,7 @@
                     body: JSON.stringify({ status: 'approved' })
                 });
                 const data = await res.json();
+
                 if (data.success) {
                     alert(`✅ Success: Worker approved!`);
                     refreshData();
@@ -772,6 +771,7 @@
 
         async function rejectWorker(id) {
             if (!confirm("Reject this application?")) return;
+
             try {
                 const res = await fetch(`/api/workers/${id}/status`, {
                     method: 'PUT',

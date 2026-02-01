@@ -312,7 +312,7 @@
             min-height: 110px;
             /* Allow height to adjust for price */
         }
-        
+
         .service-item small {
             font-size: 0.7rem;
             margin-top: 2px;
@@ -1049,7 +1049,7 @@
                     const serviceValue = item.dataset.value;
                     const servicePrice = parseFloat(item.dataset.price) || 0;
                     const serviceIndex = selectedServices.findIndex(s => s.value === serviceValue);
-                    
+
                     if (serviceIndex > -1) {
                         // Deselect if already selected
                         item.classList.remove('selected');
@@ -1062,7 +1062,7 @@
                             price: servicePrice
                         });
                     }
-                    
+
                     // Update hidden inputs
                     updateServiceInputs();
                     document.getElementById('serviceError').style.display = 'none';
@@ -1070,7 +1070,7 @@
                 });
             });
         }
-        
+
         function updateServiceInputs() {
             // For backward compatibility, set first service as main service
             if (selectedServices.length > 0) {
@@ -1081,7 +1081,7 @@
             // Store all services as JSON
             document.getElementById('selectedServices').value = JSON.stringify(selectedServices);
         }
-        
+
         initServiceSelection();
 
         // Service Search
@@ -1253,7 +1253,7 @@
         async function saveAndSearch() {
             // Ensure service inputs are up to date
             updateServiceInputs();
-            
+
             const formData = new FormData(form);
             nextBtn.disabled = true;
             nextBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Finding workers...';
@@ -1274,18 +1274,20 @@
                 // Ensure service is set in formData for booking creation
                 formData.set('service', service);
 
-                // 1. (Optional) Create Initial Booking in Backend if possible
-                try {
-                    const response = await fetch('/api/bookings', {
-                        method: 'POST',
-                        body: formData,
-                        credentials: 'include'
-                    });
-                    const data = await response.json();
-                    if (response.ok) bookingId = data.booking_id;
-                } catch (e) {
-                    console.log("Backend offline, continuing with local search only.");
+                // 1. Create Initial Booking in Backend
+                const response = await fetch('/api/bookings', {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'include'
+                });
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Server error creating booking context. Please check all fields.');
                 }
+
+                bookingId = data.booking_id;
+                console.log("Booking context created:", bookingId);
 
                 // Validate service and city
                 if (!service) {
@@ -1308,7 +1310,7 @@
                     }
                     const wData = await wResp.json();
                     if (wData.workers) allWorkers = [...wData.workers];
-                } catch (e) { 
+                } catch (e) {
                     console.warn("API Worker search failed:", e.message);
                     // Continue with local workers only
                 }
@@ -1341,7 +1343,7 @@
 
                 const filteredLocal = localApproved
                     .map(w => ({ ...w, score: getMatchScore(w) }))
-                    .filter(w => w.score > 0)
+                    .filter(w => w.score > 0 && /^[0-9a-fA-F]{24}$/.test(w.id)) // Only show workers with valid ObjectIds
                     .sort((a, b) => b.score - a.score) // Show city hits first
                     .map(w => ({
                         _id: w.id,
@@ -1425,6 +1427,10 @@
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Confirming...';
 
             try {
+                if (!bookingId) {
+                    throw new Error('Booking session expired or failed to initialize. Please go back and try again.');
+                }
+
                 const response = await fetch(`/api/bookings/${bookingId}/worker`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
@@ -1432,7 +1438,10 @@
                     credentials: 'include'
                 });
 
-                if (!response.ok) throw new Error('Failed to confirm booking');
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || 'Failed to confirm booking');
+                }
 
                 // Success View
                 document.querySelector('.booking-grid').innerHTML = `
